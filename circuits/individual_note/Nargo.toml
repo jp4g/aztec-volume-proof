@@ -1,0 +1,9 @@
+[package]
+name = "individual_note"
+type = "bin"
+authors = [""]
+
+[dependencies]
+aztec = { path = "../../../aztec-packages/noir-projects/aztec-nr/aztec" }
+uint_note = { path = "../../../aztec-packages/noir-projects/aztec-nr/uint-note" }
+poseidon = { git = "https://github.com/noir-lang/poseidon", tag = "v0.2.3"}

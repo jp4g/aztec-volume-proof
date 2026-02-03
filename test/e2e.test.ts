@@ -11,6 +11,7 @@ import { AuditableTestWallet } from "@aztec/note-collector";
 import type { ContractInstanceWithAddress } from "@aztec/stdlib/contract";
 import { sleep } from "bun";
 import { retrieveEncryptedNotes } from "../src/auditor";
+import { decryptNote, parseNotePlaintext } from "../src/decrypt";
 
 const { AZTEC_NODE_URL = "http://localhost:8080" } = process.env;
 
@@ -121,5 +122,82 @@ describe("Private Transfer Demo Test", () => {
         console.log("\n✓ Test complete - encrypted logs retrieved successfully!");
     });
 
-    
+    test("decrypt a note", async () => {
+        // Small wait to ensure everything is synced
+        await sleep(3000);
+
+        // Step 1: Get encrypted notes from auditor
+        console.log("\n=== STEP 1: Retrieving Encrypted Notes ===");
+        const taggingSecrets = await wallet.exportTaggingSecrets(addresses[1], [token.address], [addresses[2]]);
+        const results = await retrieveEncryptedNotes(node, taggingSecrets);
+
+        expect(results.totalNotes).toBeGreaterThan(0);
+        console.log(`Found ${results.totalNotes} encrypted notes`);
+
+        // Step 2: Get the first note to decrypt
+        const firstNote = results.secrets[0]?.notes[0];
+        if (!firstNote) {
+            throw new Error("No notes found to decrypt");
+        }
+
+        console.log("\n=== STEP 2: Decrypting Note ===");
+        console.log(`Note Hash: ${firstNote.noteHash}`);
+        console.log(`Tx Hash: ${firstNote.txHash}`);
+        console.log(`Ciphertext size: ${firstNote.ciphertextBytes} bytes`);
+
+        // Step 3: Get recipient's keys
+        // The recipient is addresses[1] (the account we exported secrets for)
+        const pxe = wallet.pxe as any; // Cast to access internal methods
+        const registeredAccounts = await pxe.getRegisteredAccounts();
+        const recipientCompleteAddress = registeredAccounts.find((acc: any) =>
+            acc.address.equals(addresses[1])
+        );
+
+        if (!recipientCompleteAddress) {
+            throw new Error(`Account ${addresses[1].toString()} not found in PXE`);
+        }
+
+        // Get the master incoming viewing secret key
+        const ivskM = await pxe.keyStore.getMasterIncomingViewingSecretKey(addresses[1]);
+
+        // Step 4: Decrypt the note
+        const encryptedLogBuffer = Buffer.from(firstNote.ciphertext, 'hex');
+        const plaintext = await decryptNote(
+            encryptedLogBuffer,
+            recipientCompleteAddress,
+            ivskM
+        );
+
+        if (!plaintext) {
+            throw new Error("Decryption failed");
+        }
+
+        console.log(`✓ Decryption successful! Got ${plaintext.length} fields`);
+
+        // Step 5: Parse the plaintext
+        const parsed = parseNotePlaintext(plaintext);
+        if (!parsed) {
+            throw new Error("Failed to parse plaintext");
+        }
+
+        // Extract the note value (for UintNote, the packed note is just the value)
+        const value = parsed.packedNote.length > 0 ? parsed.packedNote[0].toBigInt() : 0n;
+        const tokenAmount = value / precision(1n);
+
+        console.log("\n=== DECRYPTED NOTE CONTENTS ===");
+        console.log(`✓ NOTE VALUE: ${tokenAmount} tokens (${value} raw)`);
+        console.log(`Message Type ID: ${parsed.msgTypeId}`);
+        console.log(`Note Type ID: ${parsed.noteTypeId}`);
+        console.log(`Owner: ${parsed.owner.toString()}`);
+        console.log(`Storage Slot: ${parsed.storageSlot.toString()}`);
+        console.log(`Randomness: ${parsed.randomness.toString()}`);
+        console.log(`Packed Note Fields: ${parsed.packedNote.length}`);
+
+        // Verify the owner matches
+        expect(parsed.owner.equals(addresses[1]) || parsed.owner.equals(addresses[2])).toBe(true);
+
+        console.log("\n✓ Test complete - note decrypted successfully!");
+    });
+
+
 });
