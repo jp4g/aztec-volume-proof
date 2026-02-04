@@ -1,12 +1,10 @@
 import { Aes128 } from '@aztec/foundation/crypto/aes128';
-import { Grumpkin } from '@aztec/foundation/crypto/grumpkin';
 import { poseidon2HashWithSeparator } from '@aztec/foundation/crypto/poseidon';
 import { Fr } from '@aztec/foundation/curves/bn254';
 import { Point } from '@aztec/foundation/curves/grumpkin';
 import { GeneratorIndex } from '@aztec/constants';
 import { deriveEcdhSharedSecret } from '@aztec/stdlib/logs';
 import { computeAddressSecret } from '@aztec/stdlib/keys';
-import type { AztecAddress } from '@aztec/stdlib/aztec-address';
 import type { CompleteAddress } from '@aztec/stdlib/contract';
 
 /**
@@ -180,47 +178,3 @@ async function reconstructPublicKey(x: Fr, signBit: boolean): Promise<Point | nu
     }
 }
 
-/**
- * Parse decrypted plaintext into note fields.
- *
- * Plaintext structure for a note:
- * [expanded_metadata, owner, storage_slot, randomness, ...packed_note]
- *
- * @param plaintext - The decrypted field array
- * @returns Parsed note components
- */
-export function parseNotePlaintext(plaintext: Fr[]): {
-    msgTypeId: bigint;
-    noteTypeId: bigint;
-    owner: AztecAddress;
-    storageSlot: Fr;
-    randomness: Fr;
-    packedNote: Fr[];
-} | null {
-    if (plaintext.length < 4) {
-        console.error('Plaintext too short to be a valid note');
-        return null;
-    }
-
-    // Decode expanded metadata (upper 64 bits = msg_type_id, lower 64 bits = note_type_id)
-    const expandedMetadata = plaintext[0].toBigInt();
-    const msgTypeId = expandedMetadata >> 64n;
-    const noteTypeId = expandedMetadata & ((1n << 64n) - 1n);
-
-    // Import AztecAddress here to avoid circular dependency issues
-    const { AztecAddress } = require('@aztec/stdlib/aztec-address');
-
-    const owner = AztecAddress.fromField(plaintext[1]);
-    const storageSlot = plaintext[2];
-    const randomness = plaintext[3];
-    const packedNote = plaintext.slice(4);
-
-    return {
-        msgTypeId,
-        noteTypeId,
-        owner,
-        storageSlot,
-        randomness,
-        packedNote,
-    };
-}

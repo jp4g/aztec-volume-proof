@@ -47,7 +47,18 @@ async function postinstall() {
       "./Token.json"
     );
     console.log('✓ Token artifact successfully built');
-    
+
+    // Change back to project root for circuit compilation
+    process.chdir(join(process.cwd(), '..', '..'));
+
+    // Compile Noir circuits
+    console.log('Compiling individual_note circuit...');
+    await $`cd circuits/individual_note && nargo compile`;
+    console.log('✓ individual_note compiled');
+
+    console.log('Compiling note_summary_tree circuit...');
+    await $`cd circuits/note_summary_tree && nargo compile`;
+    console.log('✓ note_summary_tree compiled');
 
   } catch (error) {
     console.error('Failed to initialize git submodules:', error);

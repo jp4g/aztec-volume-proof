@@ -1,15 +1,12 @@
 {
-  "name": "pod_racing_codespace",
+  "name": "volume-proof",
   "version": "1.0.0",
-  "main": "index.js",
-  "repository": "https://github.com/AztecProtocol/aztec-starter.git",
-  "author": "Josh Crites <jc@joshcrites.com>",
   "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {
     "postinstall": "bun scripts/postinstall.ts",
-    "test": "bun test test/"
+    "test": "bun test test/e2e.test.ts"
   },
   "dependencies": {
     "@aztec/accounts": "file:../aztec-packages/yarn-project/accounts",
@@ -22,20 +19,11 @@
     "@aztec/note-collector": "file:../aztec-packages/yarn-project/note-collector",
     "@aztec/bb.js": "file:../aztec-packages/barretenberg/ts",
     "@aztec/noir-noir_js": "file:../aztec-packages/noir/packages/noir_js",
-    "@aztec/noir-types": "file:../aztec-packages/noir/packages/types",
-    "dotenv": "^17.2.2"
+    "@aztec/noir-types": "file:../aztec-packages/noir/packages/types"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.11",
-    "@types/mocha": "^10.0.6",
     "@types/node": "^22.15.1",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.1",
-    "ts-node": "^10.9.2",
     "typescript": "^5.4.4"
-  },
-  "jest": {
-    "testTimeout": 200000
   },
   "resolutions": {
     "@aztec/accounts": "file:../aztec-packages/yarn-project/accounts",

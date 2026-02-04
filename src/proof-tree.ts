@@ -2,7 +2,7 @@ import { Fr } from '@aztec/foundation/curves/bn254';
 import { Noir } from '@aztec/noir-noir_js';
 import { Barretenberg, UltraHonkBackend } from '@aztec/bb.js';
 import type { CompiledCircuit } from '@aztec/noir-types';
-import { decryptNote, parseNotePlaintext } from './decrypt';
+import { decryptNote } from './decrypt';
 import { getZeroHashes } from './imt';
 import { computeAddressSecret } from '@aztec/stdlib/keys';
 
